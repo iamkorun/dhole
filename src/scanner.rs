@@ -53,13 +53,6 @@ const KNOWN_TOOLS: &[&str] = &[
     "zip",
 ];
 
-/// A discovered tool reference: which tool, found in which files.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ToolReference {
-    pub name: String,
-    pub sources: BTreeSet<String>,
-}
-
 /// Scan result: map of tool name -> set of source files.
 pub type ScanResult = BTreeMap<String, BTreeSet<String>>;
 
@@ -92,16 +85,6 @@ pub fn scan_directory(dir: &Path) -> ScanResult {
     }
 
     result
-}
-
-/// Convert scan result to a sorted vec of ToolReference.
-pub fn to_tool_references(scan: &ScanResult) -> Vec<ToolReference> {
-    scan.iter()
-        .map(|(name, sources)| ToolReference {
-            name: name.clone(),
-            sources: sources.clone(),
-        })
-        .collect()
 }
 
 /// Collect files worth scanning from a project directory.
@@ -340,18 +323,6 @@ mod tests {
         let result = scan_directory(dir.path());
         assert!(result.contains_key("curl"));
         assert!(result["curl"].len() >= 2, "curl should be found in both files");
-    }
-
-    #[test]
-    fn test_to_tool_references() {
-        let mut scan: ScanResult = BTreeMap::new();
-        let mut sources = BTreeSet::new();
-        sources.insert("Makefile".to_string());
-        scan.insert("docker".to_string(), sources);
-
-        let refs = to_tool_references(&scan);
-        assert_eq!(refs.len(), 1);
-        assert_eq!(refs[0].name, "docker");
     }
 
     #[test]
