@@ -218,6 +218,30 @@ mod tests {
     }
 
     #[test]
+    fn test_extract_version_python_style() {
+        assert_eq!(
+            extract_version_string("Python 3.14.0"),
+            Some("3.14.0".to_string())
+        );
+    }
+
+    #[test]
+    fn test_extract_version_npm_style() {
+        assert_eq!(
+            extract_version_string("10.2.4"),
+            Some("10.2.4".to_string())
+        );
+    }
+
+    #[test]
+    fn test_extract_version_go_style() {
+        assert_eq!(
+            extract_version_string("go version go1.22.0 linux/amd64"),
+            Some("1.22.0".to_string())
+        );
+    }
+
+    #[test]
     fn test_check_tool_nonexistent() {
         let status = check_tool(
             "definitely_not_a_real_tool_xyz123",

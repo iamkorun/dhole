@@ -156,6 +156,52 @@ fn test_scan_github_workflow() {
 }
 
 #[test]
+fn test_scan_dockerfile() {
+    let dir = tempdir().unwrap();
+    fs::write(
+        dir.path().join("Dockerfile"),
+        "FROM python:3.11\nRUN pip install flask\nRUN curl -sL https://example.com\n",
+    )
+    .unwrap();
+
+    dhole_cmd()
+        .args(["-d", dir.path().to_str().unwrap()])
+        .assert()
+        .stdout(predicate::str::contains("pip"))
+        .stdout(predicate::str::contains("curl"))
+        .stdout(predicate::str::contains("Dockerfile"));
+}
+
+#[test]
+fn test_scan_justfile() {
+    let dir = tempdir().unwrap();
+    fs::write(
+        dir.path().join("Justfile"),
+        "build:\n    cargo build --release\n",
+    )
+    .unwrap();
+
+    dhole_cmd()
+        .args(["-d", dir.path().to_str().unwrap()])
+        .assert()
+        .stdout(predicate::str::contains("cargo"))
+        .stdout(predicate::str::contains("Justfile"));
+}
+
+#[test]
+fn test_nested_shell_script() {
+    let dir = tempdir().unwrap();
+    let scripts = dir.path().join("scripts");
+    fs::create_dir(&scripts).unwrap();
+    fs::write(scripts.join("deploy.sh"), "#!/bin/bash\nrsync -avz . server:/app\n").unwrap();
+
+    dhole_cmd()
+        .args(["-d", dir.path().to_str().unwrap()])
+        .assert()
+        .stdout(predicate::str::contains("rsync"));
+}
+
+#[test]
 fn test_dedup_across_files() {
     let dir = tempdir().unwrap();
     fs::write(dir.path().join("Makefile"), "test:\n\tgit log\n").unwrap();

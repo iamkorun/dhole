@@ -333,6 +333,58 @@ mod tests {
     }
 
     #[test]
+    fn test_scan_dockerfile() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(
+            dir.path().join("Dockerfile"),
+            "FROM node:20\nRUN npm install\nRUN curl -sL https://example.com | tar xz\n",
+        )
+        .unwrap();
+
+        let result = scan_directory(dir.path());
+        assert!(result.contains_key("npm"));
+        assert!(result.contains_key("curl"));
+        assert!(result.contains_key("tar"));
+    }
+
+    #[test]
+    fn test_scan_justfile() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(
+            dir.path().join("Justfile"),
+            "deploy:\n    kubectl apply -f k8s/\n    helm upgrade app chart/\n",
+        )
+        .unwrap();
+
+        let result = scan_directory(dir.path());
+        assert!(result.contains_key("kubectl"));
+        assert!(result.contains_key("helm"));
+    }
+
+    #[test]
+    fn test_scan_nested_shell_scripts() {
+        let dir = tempfile::tempdir().unwrap();
+        let scripts_dir = dir.path().join("scripts");
+        fs::create_dir(&scripts_dir).unwrap();
+        fs::write(scripts_dir.join("setup.sh"), "#!/bin/bash\npip install -r requirements.txt\n").unwrap();
+
+        let result = scan_directory(dir.path());
+        assert!(result.contains_key("pip"));
+        assert!(result["pip"].iter().any(|s| s.contains("scripts/setup.sh")));
+    }
+
+    #[test]
+    fn test_scan_skips_node_modules() {
+        let dir = tempfile::tempdir().unwrap();
+        let nm_dir = dir.path().join("node_modules").join("foo");
+        fs::create_dir_all(&nm_dir).unwrap();
+        fs::write(nm_dir.join("build.sh"), "#!/bin/bash\ncargo build\n").unwrap();
+
+        let result = scan_directory(dir.path());
+        assert!(!result.contains_key("cargo"), "should skip node_modules");
+    }
+
+    #[test]
     fn test_content_contains_tool_edge_cases() {
         assert!(content_contains_tool("git push", "git"));
         assert!(content_contains_tool("run git push", "git"));
