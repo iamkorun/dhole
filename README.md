@@ -13,6 +13,8 @@
 
 ---
 
+<!-- TODO: Add demo GIF -->
+
 ## The Problem
 
 Your project works on your machine. Then a new contributor clones it, runs `make build`, and gets `kubectl: command not found`. Your Makefile calls `docker`, your CI uses `jq`, your deploy script needs `aws` — but none of that is documented anywhere.
@@ -102,6 +104,7 @@ dhole --quiet
 |------|-------|-------------|
 | `--dir <path>` | `-d` | Directory to scan (defaults to `.`) |
 | `--quiet` | `-q` | Suppress output, only set exit code |
+| `--verbose` | `-v` | Show which files are being scanned |
 | `--help` | `-h` | Print help |
 | `--version` | `-V` | Print version |
 
