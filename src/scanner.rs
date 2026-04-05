@@ -130,15 +130,15 @@ fn collect_scannable_files(dir: &Path) -> Vec<PathBuf> {
 
     // GitHub Actions workflows
     let workflows_dir = dir.join(".github").join("workflows");
-    if workflows_dir.is_dir() {
-        if let Ok(entries) = fs::read_dir(&workflows_dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_file() {
-                    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-                    if ext == "yml" || ext == "yaml" {
-                        files.push(path);
-                    }
+    if workflows_dir.is_dir()
+        && let Ok(entries) = fs::read_dir(&workflows_dir)
+    {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+                if ext == "yml" || ext == "yaml" {
+                    files.push(path);
                 }
             }
         }

@@ -149,7 +149,7 @@ fn extract_version_string(raw: &str) -> Option<String> {
         }
         let candidate = &first_line[start..i];
         // Pick the longest match
-        if best.map_or(true, |b| candidate.len() > b.len()) {
+        if best.is_none_or(|b| candidate.len() > b.len()) {
             best = Some(candidate);
         }
     }
