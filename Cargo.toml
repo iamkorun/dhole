@@ -1,0 +1,19 @@
+[package]
+name = "dhole"
+version = "0.1.0"
+edition = "2024"
+description = "Scan a project and detect all external CLI tools it depends on"
+license = "MIT"
+
+[[bin]]
+name = "dhole"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+colored = "3"
+
+[dev-dependencies]
+tempfile = "3"
+assert_cmd = "2"
+predicates = "3"
