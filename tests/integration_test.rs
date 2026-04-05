@@ -13,7 +13,7 @@ fn test_help_flag() {
         .arg("--help")
         .assert()
         .success()
-        .stdout(predicate::str::contains("Scan a project"));
+        .stdout(predicate::str::contains("sniff out every hidden CLI"));
 }
 
 #[test]

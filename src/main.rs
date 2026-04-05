@@ -7,9 +7,17 @@ use dhole::checker;
 use dhole::display;
 use dhole::scanner;
 
-/// Scan a project for external CLI tool dependencies and check if they're installed.
+/// dhole — sniff out every hidden CLI dependency in your project
+///
+/// Scans Makefiles, shell scripts, CI configs, Dockerfiles, and docker-compose
+/// files to find all external CLI tools your project depends on, then checks
+/// which ones are installed.
 #[derive(Parser, Debug)]
-#[command(name = "dhole", version, about)]
+#[command(
+    name = "dhole",
+    version,
+    about = "Sniff out every hidden CLI dependency in your project",
+)]
 struct Cli {
     /// Directory to scan (defaults to current directory)
     #[arg(short, long, default_value = ".")]
@@ -18,6 +26,10 @@ struct Cli {
     /// Quiet mode: only set exit code, no output (useful for CI)
     #[arg(short, long)]
     quiet: bool,
+
+    /// Show which files are being scanned
+    #[arg(short, long)]
+    verbose: bool,
 }
 
 fn main() {
@@ -40,7 +52,19 @@ fn main() {
         process::exit(2);
     }
 
+    let verbose = cli.verbose && !cli.quiet;
+
+    if verbose {
+        use colored::Colorize;
+        eprintln!("{} scanning {}", "verbose:".dimmed(), dir.display());
+    }
+
     let scan_result = scanner::scan_directory(&dir);
+
+    if verbose {
+        use colored::Colorize;
+        eprintln!("{} found {} tool(s) across scanned files", "verbose:".dimmed(), scan_result.len());
+    }
 
     if scan_result.is_empty() {
         if !cli.quiet {
