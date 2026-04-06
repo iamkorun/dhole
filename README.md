@@ -32,17 +32,17 @@ Named after the [dhole](https://en.wikipedia.org/wiki/Dhole) — a pack-hunting 
 ```
 $ dhole
 
-  Tool             Found in                          Installed  Version
-  ────────────    ────────────────────────────────   ─────────  ───────
-  aws              deploy.sh                          yes        2.15.30
-  cargo            .github/workflows/ci.yml           yes        1.78.0
-  curl             Makefile, deploy.sh                yes        8.7.1
-  docker           Makefile, docker-compose.yml       yes        26.1.4
-  docker-compose   docker-compose.yml                 yes        2.27.0
-  helm             Makefile                           NO         —
-  jq               deploy.sh                          yes        1.7.1
-  kubectl          Makefile                           NO         —
-  npm              .github/workflows/ci.yml           yes        10.8.1
+  Tool            Found in                       Installed  Version
+  ──────────────  ─────────────────────────────  ─────────  ───────
+  aws             deploy.sh                      yes        2.15.30
+  cargo           .github/workflows/ci.yml       yes        1.78.0
+  curl            Makefile, deploy.sh            yes        8.7.1
+  docker          Makefile, docker-compose.yml   yes        26.1.4
+  docker-compose  docker-compose.yml             yes        2.27.0
+  helm            Makefile                       NO         —
+  jq              deploy.sh                      yes        1.7.1
+  kubectl         Makefile                       NO         —
+  npm             .github/workflows/ci.yml       yes        10.8.1
 
   ✗ 7/9 tools installed, 2 missing.
 ```
@@ -102,24 +102,30 @@ dhole --quiet
 
 | Flag | Short | Description |
 |------|-------|-------------|
-| `--dir <path>` | `-d` | Directory to scan (defaults to `.`) |
+| `--dir <PATH>` | `-d` | Directory to scan (defaults to `.`) |
 | `--quiet` | `-q` | Suppress output, only set exit code |
 | `--verbose` | `-v` | Show which files are being scanned |
 | `--help` | `-h` | Print help |
 | `--version` | `-V` | Print version |
+
+`--quiet` and `--verbose` are mutually exclusive — dhole will tell you instead of silently picking one.
+
+Set the `NO_COLOR` environment variable to disable colored output.
 
 ## Scanned Files
 
 | File / Pattern | What it catches |
 |----------------|-----------------|
 | `Makefile`, `GNUmakefile` | Build commands, deploy targets |
-| `*.sh` (recursive, max depth 5) | Shell scripts anywhere in the project |
+| `*.sh`, `*.bash`, `*.zsh` (recursive, max depth 5) | Shell scripts anywhere in the project |
 | `.github/workflows/*.yml` | GitHub Actions CI/CD |
 | `.gitlab-ci.yml` | GitLab CI/CD |
-| `docker-compose.yml` / `.yaml` | Docker Compose services |
-| `Dockerfile` | Container build commands |
-| `Justfile` | Just command runner |
-| `Taskfile.yml` | Task runner |
+| `docker-compose.yml` / `.yaml`, `compose.yml` / `.yaml` | Docker Compose services |
+| `Dockerfile`, `Containerfile` | Container build commands (Docker / Podman) |
+| `Justfile` / `justfile` | Just command runner |
+| `Taskfile.yml` / `.yaml` | Task runner |
+
+Build artifacts and vendored dependencies are skipped automatically: `node_modules/`, `target/`, `vendor/`, `__pycache__/`, `dist/`, `build/`, and any hidden directory.
 
 ## Exit Codes
 
@@ -152,18 +158,19 @@ jobs:
 
 ## Detected Tools
 
-dhole recognizes 50+ common CLI tools including:
+dhole recognizes 60+ common CLI tools including:
 
-`ansible` `aws` `az` `cargo` `cmake` `curl` `docker` `docker-compose` `ffmpeg` `gcc` `gcloud` `git` `go` `grep` `helm` `jq` `kubectl` `make` `mongosh` `mysql` `node` `npm` `npx` `openssl` `pip` `pnpm` `psql` `python` `redis-cli` `rsync` `rustc` `sed` `ssh` `tar` `terraform` `wget` `yarn` `yq` and more.
+`ansible` `aws` `az` `bash` `bun` `bundle` `cargo` `cmake` `composer` `curl` `deno` `docker` `docker-compose` `ffmpeg` `gcc` `gcloud` `gem` `gh` `git` `go` `gradle` `grep` `helm` `java` `jq` `kubectl` `make` `mongosh` `mvn` `mysql` `nginx` `node` `npm` `npx` `openssl` `php` `pip` `pnpm` `podman` `poetry` `psql` `python` `redis-cli` `rsync` `ruby` `rustc` `sed` `ssh` `tar` `terraform` `uv` `wget` `yarn` `yq` `zsh` and more.
 
 ## Features
 
 - **Zero config** — point it at a directory and go
 - **Smart scanning** — word-boundary matching avoids false positives (`node_modules` won't trigger `node`)
+- **Parallel checking** — `which` and `--version` lookups run concurrently across tools
 - **Version detection** — tries `--version`, `-v`, and `version` subcommand with a 5s timeout
-- **CI-friendly** — `--quiet` mode returns only an exit code
+- **CI-friendly** — `--quiet` mode returns only an exit code; errors still print to stderr
 - **Fast** — pure Rust, no regex dependency, scans instantly
-- **Cross-source dedup** — a tool found in 3 files shows up once with all sources listed
+- **Cross-source dedup** — a tool found in many files shows up once with the first 4 sources listed
 
 ## Contributing
 
