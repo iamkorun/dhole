@@ -222,3 +222,83 @@ fn test_dedup_across_files() {
         "Both sources should be listed"
     );
 }
+
+#[test]
+fn test_quiet_and_verbose_are_mutually_exclusive() {
+    let dir = tempdir().unwrap();
+    fs::write(dir.path().join("Makefile"), "test:\n\tgit status\n").unwrap();
+
+    dhole_cmd()
+        .args(["-d", dir.path().to_str().unwrap(), "--quiet", "--verbose"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("cannot be used with"));
+}
+
+#[test]
+fn test_invalid_dir_error_visible_even_with_quiet() {
+    // The error message must always reach stderr, even in --quiet mode,
+    // otherwise the user has no idea why dhole bailed.
+    dhole_cmd()
+        .args(["-d", "/nonexistent/path/abc999", "--quiet"])
+        .assert()
+        .code(2)
+        .stderr(predicate::str::contains("error"));
+}
+
+#[test]
+fn test_dir_pointing_at_a_file_errors() {
+    let tmp = tempdir().unwrap();
+    let file = tmp.path().join("regular-file.txt");
+    fs::write(&file, "hello").unwrap();
+
+    dhole_cmd()
+        .args(["-d", file.to_str().unwrap()])
+        .assert()
+        .code(2)
+        .stderr(predicate::str::contains("not a directory"));
+}
+
+#[test]
+fn test_verbose_writes_to_stderr() {
+    let dir = tempdir().unwrap();
+    fs::write(dir.path().join("Makefile"), "test:\n\tgit status\n").unwrap();
+
+    dhole_cmd()
+        .args(["-d", dir.path().to_str().unwrap(), "--verbose"])
+        .assert()
+        .stderr(predicate::str::contains("scanning"))
+        .stderr(predicate::str::contains("found"));
+}
+
+#[test]
+fn test_compose_yaml_is_scanned() {
+    let dir = tempdir().unwrap();
+    fs::write(
+        dir.path().join("compose.yaml"),
+        "services:\n  app:\n    image: alpine\n    command: rsync -avz . /backup\n",
+    )
+    .unwrap();
+
+    dhole_cmd()
+        .args(["-d", dir.path().to_str().unwrap()])
+        .assert()
+        .stdout(predicate::str::contains("rsync"))
+        .stdout(predicate::str::contains("compose.yaml"));
+}
+
+#[test]
+fn test_lowercase_justfile_is_scanned() {
+    let dir = tempdir().unwrap();
+    fs::write(
+        dir.path().join("justfile"),
+        "build:\n    cargo build --release\n",
+    )
+    .unwrap();
+
+    dhole_cmd()
+        .args(["-d", dir.path().to_str().unwrap()])
+        .assert()
+        .stdout(predicate::str::contains("cargo"))
+        .stdout(predicate::str::contains("justfile"));
+}

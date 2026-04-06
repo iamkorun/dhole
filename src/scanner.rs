@@ -431,4 +431,123 @@ mod tests {
         assert!(content_contains_tool("git", "git"));
         assert!(!content_contains_tool("", "git"));
     }
+
+    #[test]
+    fn test_scan_lowercase_justfile() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(
+            dir.path().join("justfile"),
+            "deploy:\n    kubectl apply -f .\n",
+        )
+        .unwrap();
+
+        let result = scan_directory(dir.path());
+        assert!(result.contains_key("kubectl"));
+    }
+
+    #[test]
+    fn test_scan_compose_yaml() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(
+            dir.path().join("compose.yaml"),
+            "services:\n  db:\n    image: postgres\n    healthcheck:\n      test: pg_dump --version\n",
+        )
+        .unwrap();
+
+        let result = scan_directory(dir.path());
+        assert!(result.contains_key("pg_dump"));
+    }
+
+    #[test]
+    fn test_scan_containerfile() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(
+            dir.path().join("Containerfile"),
+            "FROM alpine\nRUN apk add curl\nRUN curl -L https://example.com\n",
+        )
+        .unwrap();
+
+        let result = scan_directory(dir.path());
+        assert!(result.contains_key("curl"));
+    }
+
+    #[test]
+    fn test_scan_bash_extension() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(
+            dir.path().join("setup.bash"),
+            "#!/bin/bash\nrsync -avz . backup/\n",
+        )
+        .unwrap();
+
+        let result = scan_directory(dir.path());
+        assert!(result.contains_key("rsync"));
+    }
+
+    #[test]
+    fn test_scan_zsh_extension() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(
+            dir.path().join("hooks.zsh"),
+            "#!/bin/zsh\nyq '.version' config.yml\n",
+        )
+        .unwrap();
+
+        let result = scan_directory(dir.path());
+        assert!(result.contains_key("yq"));
+    }
+
+    #[test]
+    fn test_scan_skips_dist_and_build() {
+        let dir = tempfile::tempdir().unwrap();
+        let dist = dir.path().join("dist");
+        let build = dir.path().join("build");
+        fs::create_dir_all(&dist).unwrap();
+        fs::create_dir_all(&build).unwrap();
+        fs::write(dist.join("install.sh"), "#!/bin/bash\nterraform init\n").unwrap();
+        fs::write(build.join("setup.sh"), "#!/bin/bash\nansible-playbook .\n").unwrap();
+
+        let result = scan_directory(dir.path());
+        assert!(!result.contains_key("terraform"), "should skip dist/");
+        assert!(!result.contains_key("ansible"), "should skip build/");
+    }
+
+    #[test]
+    fn test_detects_new_tools() {
+        let content = "deno run --allow-read script.ts\ngh pr create\nbun install\nuv pip install\n";
+        let tools = extract_tools(content);
+        assert!(tools.contains("deno"));
+        assert!(tools.contains("gh"));
+        assert!(tools.contains("bun"));
+        assert!(tools.contains("uv"));
+    }
+
+    #[test]
+    fn test_detects_jvm_tools() {
+        let content = "mvn clean install\ngradle build\njava -jar app.jar\n";
+        let tools = extract_tools(content);
+        assert!(tools.contains("mvn"));
+        assert!(tools.contains("gradle"));
+        assert!(tools.contains("java"));
+    }
+
+    #[test]
+    fn test_word_boundary_skips_underscored_identifiers() {
+        // Underscore IS a word char, so tools embedded in snake_case identifiers
+        // must NOT match. Hyphens are NOT word chars, so docker-compose works.
+        let content = "bash_history is a file\nthe_node_runtime\npython_path = '/usr'\n";
+        let tools = extract_tools(content);
+        assert!(!tools.contains("bash"), "bash should not match inside bash_history");
+        assert!(!tools.contains("node"), "node should not match inside the_node_runtime");
+        assert!(!tools.contains("python"), "python should not match inside python_path");
+    }
+
+    #[test]
+    fn test_word_boundary_allows_path_separators() {
+        // Slashes and hyphens ARE valid boundaries.
+        let content = "/usr/bin/git --version\n./scripts/curl-helper.sh\n";
+        let tools = extract_tools(content);
+        assert!(tools.contains("git"));
+        assert!(tools.contains("curl"));
+    }
 }

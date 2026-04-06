@@ -271,4 +271,48 @@ mod tests {
         assert!(!status.installed);
         assert!(status.version.is_none());
     }
+
+    #[test]
+    fn test_check_all_returns_sorted() {
+        // check_all parallelizes the work; it must still return tools in
+        // alphabetical order so the table output is deterministic.
+        let mut tools: crate::scanner::ScanResult = std::collections::BTreeMap::new();
+        tools.insert("git".to_string(), BTreeSet::from(["a".to_string()]));
+        tools.insert("aws".to_string(), BTreeSet::from(["b".to_string()]));
+        tools.insert("kubectl".to_string(), BTreeSet::from(["c".to_string()]));
+
+        let results = check_all(&tools);
+        assert_eq!(results.len(), 3);
+        assert_eq!(results[0].name, "aws");
+        assert_eq!(results[1].name, "git");
+        assert_eq!(results[2].name, "kubectl");
+    }
+
+    #[test]
+    fn test_extract_version_with_build_metadata() {
+        assert_eq!(
+            extract_version_string("kubectl version 1.28.5+abc.def"),
+            Some("1.28.5+abc.def".to_string())
+        );
+    }
+
+    #[test]
+    fn test_extract_version_picks_longest_match() {
+        // Pick the most informative candidate when multiple version-like
+        // patterns appear in the same line.
+        assert_eq!(
+            extract_version_string("openssl 3.0.10 1 Aug 2023 (Library: OpenSSL 3.0.10 1 Aug 2023)"),
+            Some("3.0.10".to_string())
+        );
+    }
+
+    #[test]
+    fn test_extract_version_only_first_line() {
+        // Multi-line output: only the first line is parsed, even if a
+        // later line has a longer or fancier version string.
+        assert_eq!(
+            extract_version_string("Tool 1.0\n\nFull version: 9.99.99-build1234"),
+            Some("1.0".to_string())
+        );
+    }
 }
