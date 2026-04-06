@@ -6,6 +6,9 @@
   <title>dhole — Sniff out every hidden CLI dependency in your project</title>
   <meta name="description" content="A Rust CLI that scans Makefiles, shell scripts, CI configs, and Dockerfiles to find all external CLI tools your project depends on.">
 
+  <!-- SVG favicon: dog emoji -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%90%95%3C/text%3E%3C/svg%3E">
+
   <!-- Open Graph -->
   <meta property="og:title" content="dhole — Sniff out hidden CLI dependencies">
   <meta property="og:description" content="Scan your project for every external CLI tool it depends on. Get a clean pass/fail table showing what's installed and what's missing.">
@@ -13,7 +16,7 @@
   <meta property="og:url" content="https://iamkorun.github.io/dhole">
 
   <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="dhole — Sniff out hidden CLI dependencies">
   <meta name="twitter:description" content="Scan your project for every external CLI tool it depends on.">
 
@@ -148,20 +151,21 @@
         <span class="ml-3 text-xs text-gray-500 font-mono">~/my-project</span>
       </div>
       <div class="p-5 sm:p-6 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto">
-        <p class="text-gray-500">$ <span class="text-white">dhole</span></p>
+        <p class="text-gray-500 whitespace-pre">$ <span class="text-white">dhole</span></p>
         <br>
-        <p class="text-white font-bold">  Tool             Found in                       Installed  Version</p>
-        <p class="text-gray-600">  ──────────────  ─────────────────────────────  ─────────  ───────</p>
-        <p>  <span class="text-white">aws</span>              deploy.sh                      <span class="text-pass">yes</span>        2.15.30</p>
-        <p>  <span class="text-white">cargo</span>            .github/workflows/ci.yml       <span class="text-pass">yes</span>        1.78.0</p>
-        <p>  <span class="text-white">curl</span>             Makefile, deploy.sh            <span class="text-pass">yes</span>        8.7.1</p>
-        <p>  <span class="text-white">docker</span>           Makefile, docker-compose.yml   <span class="text-pass">yes</span>        26.1.4</p>
-        <p>  <span class="text-white">helm</span>             Makefile                       <span class="text-fail font-bold">NO</span>         <span class="text-gray-600">—</span></p>
-        <p>  <span class="text-white">jq</span>               deploy.sh                      <span class="text-pass">yes</span>        1.7.1</p>
-        <p>  <span class="text-white">kubectl</span>          Makefile                       <span class="text-fail font-bold">NO</span>         <span class="text-gray-600">—</span></p>
-        <p>  <span class="text-white">npm</span>              .github/workflows/ci.yml       <span class="text-pass">yes</span>        10.8.1</p>
+        <p class="text-white font-bold whitespace-pre">  Tool            Found in                       Installed  Version</p>
+        <p class="text-gray-600 whitespace-pre">  ──────────────  ─────────────────────────────  ─────────  ───────</p>
+        <p class="whitespace-pre">  <span class="text-white">aws</span>             deploy.sh                      <span class="text-pass">yes</span>        2.15.30</p>
+        <p class="whitespace-pre">  <span class="text-white">cargo</span>           .github/workflows/ci.yml       <span class="text-pass">yes</span>        1.78.0</p>
+        <p class="whitespace-pre">  <span class="text-white">curl</span>            Makefile, deploy.sh            <span class="text-pass">yes</span>        8.7.1</p>
+        <p class="whitespace-pre">  <span class="text-white">docker</span>          Makefile, docker-compose.yml   <span class="text-pass">yes</span>        26.1.4</p>
+        <p class="whitespace-pre">  <span class="text-white">docker-compose</span>  docker-compose.yml             <span class="text-pass">yes</span>        2.27.0</p>
+        <p class="whitespace-pre">  <span class="text-white">helm</span>            Makefile                       <span class="text-fail font-bold">NO</span>         <span class="text-gray-600">—</span></p>
+        <p class="whitespace-pre">  <span class="text-white">jq</span>              deploy.sh                      <span class="text-pass">yes</span>        1.7.1</p>
+        <p class="whitespace-pre">  <span class="text-white">kubectl</span>         Makefile                       <span class="text-fail font-bold">NO</span>         <span class="text-gray-600">—</span></p>
+        <p class="whitespace-pre">  <span class="text-white">npm</span>             .github/workflows/ci.yml       <span class="text-pass">yes</span>        10.8.1</p>
         <br>
-        <p>  <span class="text-fail font-bold">&#10007;</span> 6/8 tools installed, <span class="text-fail font-bold">2</span> missing.</p>
+        <p class="whitespace-pre">  <span class="text-fail font-bold">&#10007;</span> 7/9 tools installed, <span class="text-fail font-bold">2</span> missing.</p>
       </div>
     </div>
   </section>
@@ -193,12 +197,12 @@
       <div class="fade-in bg-surface-1 border border-surface-3 rounded-xl p-6" style="transition-delay: 0.1s;">
         <div class="text-2xl mb-3">⚡</div>
         <h3 class="text-white font-semibold text-lg mb-2">Instant results</h3>
-        <p class="text-gray-400 text-sm">Pure Rust, no regex crate, no config files. Point it at a directory and get results immediately.</p>
+        <p class="text-gray-400 text-sm">Pure Rust, no regex crate, no config files. Tool checks fan out across threads so a project with dozens of dependencies still completes in milliseconds.</p>
       </div>
       <div class="fade-in bg-surface-1 border border-surface-3 rounded-xl p-6" style="transition-delay: 0.2s;">
         <div class="text-2xl mb-3">📦</div>
-        <h3 class="text-white font-semibold text-lg mb-2">50+ tools recognized</h3>
-        <p class="text-gray-400 text-sm">Docker, kubectl, aws, terraform, cargo, npm, python, gcc, ffmpeg, and many more out of the box.</p>
+        <h3 class="text-white font-semibold text-lg mb-2">60+ tools recognized</h3>
+        <p class="text-gray-400 text-sm">Docker, kubectl, aws, terraform, cargo, npm, python, gh, deno, bun, mvn, gradle, gcc, and many more out of the box.</p>
       </div>
     </div>
   </section>
