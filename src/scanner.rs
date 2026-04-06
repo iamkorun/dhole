@@ -3,15 +3,26 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 /// Known CLI tools to detect in project files.
+///
+/// Keep alphabetised. Tools that are also common English words
+/// (`find`, `convert`, `make`) are intentionally included — the
+/// word-boundary matcher prevents most false positives, and the
+/// cost of a false negative ("forgot to install make") is higher
+/// than the cost of a false positive in a comment.
 const KNOWN_TOOLS: &[&str] = &[
     "ansible",
     "awk",
     "aws",
     "az",
+    "bash",
+    "bun",
+    "bundle",
     "cargo",
     "cmake",
+    "composer",
     "convert",
     "curl",
+    "deno",
     "docker",
     "docker-compose",
     "ffmpeg",
@@ -19,27 +30,37 @@ const KNOWN_TOOLS: &[&str] = &[
     "g++",
     "gcc",
     "gcloud",
+    "gem",
+    "gh",
     "git",
     "go",
+    "gradle",
     "grep",
     "helm",
+    "java",
     "jq",
     "kubectl",
     "make",
     "mongosh",
+    "mvn",
     "mysql",
+    "nginx",
     "node",
     "npm",
     "npx",
     "openssl",
     "pg_dump",
+    "php",
     "pip",
     "pnpm",
+    "podman",
+    "poetry",
     "psql",
     "python",
     "python3",
     "redis-cli",
     "rsync",
+    "ruby",
     "rustc",
     "scp",
     "sed",
@@ -47,10 +68,12 @@ const KNOWN_TOOLS: &[&str] = &[
     "tar",
     "terraform",
     "unzip",
+    "uv",
     "wget",
     "yarn",
     "yq",
     "zip",
+    "zsh",
 ];
 
 /// Scan result: map of tool name -> set of source files.
@@ -98,10 +121,15 @@ fn collect_scannable_files(dir: &Path) -> Vec<PathBuf> {
         "GNUmakefile",
         "docker-compose.yml",
         "docker-compose.yaml",
+        "compose.yml",
+        "compose.yaml",
         ".gitlab-ci.yml",
         "Dockerfile",
+        "Containerfile",
         "Justfile",
+        "justfile",
         "Taskfile.yml",
+        "Taskfile.yaml",
     ];
 
     for name in &root_files {
@@ -133,7 +161,8 @@ fn collect_scannable_files(dir: &Path) -> Vec<PathBuf> {
     files
 }
 
-/// Recursively collect .sh files, skipping hidden directories, node_modules, target, etc.
+/// Recursively collect shell scripts, skipping hidden directories,
+/// node_modules, target, etc. Catches common shell extensions.
 fn collect_shell_scripts(dir: &Path, files: &mut Vec<PathBuf>, depth: u32) {
     if depth > 5 {
         return;
@@ -148,17 +177,27 @@ fn collect_shell_scripts(dir: &Path, files: &mut Vec<PathBuf>, depth: u32) {
         let path = entry.path();
         let name = entry.file_name().to_string_lossy().to_string();
 
-        // Skip hidden dirs, node_modules, target, vendor, .git
-        if name.starts_with('.') || matches!(name.as_str(), "node_modules" | "target" | "vendor" | "__pycache__") {
+        // Skip hidden dirs, build artifacts, vendored deps.
+        if name.starts_with('.')
+            || matches!(
+                name.as_str(),
+                "node_modules" | "target" | "vendor" | "__pycache__" | "dist" | "build"
+            )
+        {
             continue;
         }
 
         if path.is_dir() {
             collect_shell_scripts(&path, files, depth + 1);
-        } else if path.is_file() && name.ends_with(".sh") {
+        } else if path.is_file() && is_shell_script(&name) {
             files.push(path);
         }
     }
+}
+
+/// True if the filename looks like a shell script.
+fn is_shell_script(name: &str) -> bool {
+    name.ends_with(".sh") || name.ends_with(".bash") || name.ends_with(".zsh")
 }
 
 /// Extract known CLI tool names from file content using word boundary matching.

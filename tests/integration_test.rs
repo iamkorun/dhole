@@ -117,7 +117,7 @@ fn test_exit_code_2_on_invalid_dir() {
         .args(["-d", "/nonexistent/path/xyz123"])
         .assert()
         .code(2)
-        .stderr(predicate::str::contains("Error"));
+        .stderr(predicate::str::contains("error"));
 }
 
 #[test]

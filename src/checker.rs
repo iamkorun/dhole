@@ -29,12 +29,33 @@ pub fn check_tool(name: &str, sources: BTreeSet<String>) -> ToolStatus {
     }
 }
 
-/// Check all discovered tools and return their statuses.
+/// Check all discovered tools in parallel and return their statuses.
+///
+/// Each tool spawns 1-3 subprocesses (which + version commands), so doing
+/// them sequentially turns into hundreds of milliseconds for a typical
+/// project. We fan out one thread per tool with `thread::scope` so the
+/// caller still gets a single owned `Vec<ToolStatus>`.
 pub fn check_all(tools: &crate::scanner::ScanResult) -> Vec<ToolStatus> {
-    tools
+    let entries: Vec<(String, BTreeSet<String>)> = tools
         .iter()
-        .map(|(name, sources)| check_tool(name, sources.clone()))
-        .collect()
+        .map(|(name, sources)| (name.clone(), sources.clone()))
+        .collect();
+
+    std::thread::scope(|scope| {
+        let handles: Vec<_> = entries
+            .into_iter()
+            .map(|(name, sources)| {
+                scope.spawn(move || check_tool(&name, sources))
+            })
+            .collect();
+
+        let mut results: Vec<ToolStatus> = handles
+            .into_iter()
+            .map(|h| h.join().expect("checker thread panicked"))
+            .collect();
+        results.sort_by(|a, b| a.name.cmp(&b.name));
+        results
+    })
 }
 
 /// Check if a tool is installed by running `which`.
