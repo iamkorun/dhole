@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en" class="dark scroll-smooth">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>dhole — Sniff out every hidden CLI dependency in your project</title>
-  <meta name="description" content="A Rust CLI that scans Makefiles, shell scripts, CI configs, and Dockerfiles to find all external CLI tools your project depends on.">
+  <meta name="color-scheme" content="dark light">
+  <title>🐕 dhole — Sniff out every hidden CLI dependency in your project</title>
+  <meta name="description" content="A Rust CLI that scans Makefiles, shell scripts, CI configs, and Dockerfiles to find all external CLI tools your project depends on. One command, zero config.">
+  <link rel="canonical" href="https://iamkorun.github.io/dhole">
 
-  <!-- SVG favicon: dog emoji -->
+  <!-- SVG favicon -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%90%95%3C/text%3E%3C/svg%3E">
 
   <!-- Open Graph -->
@@ -14,38 +16,71 @@
   <meta property="og:description" content="Scan your project for every external CLI tool it depends on. Get a clean pass/fail table showing what's installed and what's missing.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://iamkorun.github.io/dhole">
+  <meta property="og:image" content="https://iamkorun.github.io/dhole/og-image.png">
 
   <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="dhole — Sniff out hidden CLI dependencies">
   <meta name="twitter:description" content="Scan your project for every external CLI tool it depends on.">
+  <meta name="twitter:image" content="https://iamkorun.github.io/dhole/og-image.png">
 
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Theme: dark default, no flash -->
+  <script>
+    (function(){
+      try {
+        var t = localStorage.getItem('forge-theme');
+        if (t === 'light') {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.add('light');
+        } else {
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.remove('light');
+        }
+      } catch(_){ document.documentElement.classList.add('dark'); }
+    })();
+  </script>
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Satoshi:wght@400;500;600;700&display=swap">
+  <link href="https://fonts.googleapis.com/css2?family=Satoshi:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
+  <!-- Tailwind CSS pinned -->
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
   <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
+            sans: ['Satoshi', 'system-ui', 'sans-serif'],
             mono: ['JetBrains Mono', 'monospace'],
           },
           colors: {
-            surface: {
-              0: '#0a0a0f',
-              1: '#12121a',
-              2: '#1a1a26',
-              3: '#242434',
+            warm: {
+              50: '#FFFBF5',
+              100: '#FAF6EF',
+              200: '#F0E8DB',
+              300: '#D4C9B8',
+              400: '#A89A87',
+              500: '#7D7164',
+              600: '#5C5147',
+              700: '#3D352D',
+              800: '#2A2520',
+              900: '#231F1B',
+              950: '#1C1A17',
             },
             accent: {
-              DEFAULT: '#c084fc',
-              dim: '#a855f7',
-              bright: '#d8b4fe',
+              DEFAULT: '#D4775B',
+              light: '#E8956E',
+              dim: '#B8604A',
+              muted: 'rgba(212,119,91,0.15)',
             },
-            pass: '#4ade80',
-            fail: '#f87171',
+            pass: '#6BBF6B',
+            fail: '#E86B5A',
           },
         },
       },
@@ -53,195 +88,310 @@
   </script>
 
   <style>
-    body { font-family: 'Inter', system-ui, sans-serif; }
+    :root { color-scheme: dark light; }
+    body { font-family: 'Satoshi', system-ui, sans-serif; }
     code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
 
+    /* Fade-in on scroll */
     .fade-in {
       opacity: 0;
-      transform: translateY(24px);
-      transition: opacity 0.6s ease, transform 0.6s ease;
+      transform: translateY(16px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
     }
     .fade-in.visible {
       opacity: 1;
       transform: translateY(0);
     }
+    @media (prefers-reduced-motion: reduce) {
+      .fade-in { opacity: 1; transform: none; transition: none; }
+    }
 
-    .terminal {
-      background: #0d0d14;
-      border: 1px solid #2a2a3a;
+    /* Terminal chrome */
+    .terminal-chrome {
       border-radius: 12px;
       overflow: hidden;
     }
-    .terminal-bar {
-      background: #161622;
-      padding: 10px 16px;
+    .dark .terminal-chrome {
+      background: #17140F;
+      border: 1px solid #3D352D;
+      box-shadow: 0 25px 60px -12px rgba(0,0,0,0.5);
+    }
+    .light .terminal-chrome {
+      background: #FFFBF5;
+      border: 1px solid #D4C9B8;
+      box-shadow: 0 25px 60px -12px rgba(0,0,0,0.08);
+    }
+    .terminal-titlebar {
+      padding: 12px 16px;
       display: flex;
-      gap: 8px;
       align-items: center;
+      gap: 8px;
     }
-    .terminal-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
+    .dark .terminal-titlebar { background: #1C1A17; border-bottom: 1px solid #3D352D; }
+    .light .terminal-titlebar { background: #F0E8DB; border-bottom: 1px solid #D4C9B8; }
+    .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+    /* Copied toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+      z-index: 50;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .toast { transition: none; }
     }
 
-    .copy-btn {
-      transition: all 0.2s;
-    }
-    .copy-btn:hover {
-      background: rgba(168, 85, 247, 0.2);
-    }
-    .copy-btn.copied {
-      color: #4ade80;
-    }
-
-    .tab-btn.active {
-      background: rgba(168, 85, 247, 0.15);
-      color: #d8b4fe;
-      border-color: #a855f7;
-    }
+    /* Active press on buttons */
+    .press-scale { transition: transform 0.1s; }
+    .press-scale:active { transform: scale(0.97); }
   </style>
 </head>
 
-<body class="bg-surface-0 text-gray-300 antialiased">
+<body class="dark:bg-warm-950 bg-warm-100 dark:text-warm-300 text-warm-600 antialiased transition-colors">
 
-  <!-- Hero -->
-  <section class="min-h-[90vh] flex flex-col items-center justify-center px-6 text-center">
-    <div class="fade-in">
-      <p class="text-6xl mb-6">🐕</p>
-      <h1 class="text-4xl sm:text-6xl font-extrabold text-white tracking-tight mb-4">
-        dhole
-      </h1>
-      <p class="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10">
-        Sniff out every hidden CLI dependency in your project.<br class="hidden sm:block">
-        One command. Clean pass/fail table. Zero config.
-      </p>
+  <!-- Toast -->
+  <div id="toast" class="toast">
+    <div class="dark:bg-warm-800 bg-warm-200 dark:text-pass text-green-700 font-mono text-sm px-4 py-2 rounded-lg dark:border-warm-700 border-warm-300 border shadow-lg">
+      Copied!
+    </div>
+  </div>
 
-      <!-- Install command -->
-      <div class="inline-flex items-center gap-3 bg-surface-2 border border-surface-3 rounded-lg px-5 py-3 font-mono text-sm sm:text-base">
-        <span class="text-gray-500 select-none">$</span>
-        <span id="install-text" class="text-accent-bright">cargo install dhole</span>
-        <button
-          class="copy-btn ml-2 p-1.5 rounded-md text-gray-500 hover:text-accent"
-          onclick="copyInstall(this)"
-          aria-label="Copy install command"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-          </svg>
+  <!-- Nav -->
+  <nav class="sticky top-0 z-40 dark:bg-warm-950/90 bg-warm-100/90 backdrop-blur-md dark:border-warm-800 border-warm-200 border-b">
+    <div class="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+      <a href="#" class="font-semibold dark:text-warm-100 text-warm-900 text-lg tracking-tight">
+        🐕 dhole
+      </a>
+      <div class="flex items-center gap-4">
+        <a href="#features" class="text-sm dark:text-warm-400 text-warm-500 dark:hover:text-warm-200 hover:text-warm-800 transition-colors hidden sm:block">Features</a>
+        <a href="#install" class="text-sm dark:text-warm-400 text-warm-500 dark:hover:text-warm-200 hover:text-warm-800 transition-colors hidden sm:block">Install</a>
+        <a href="https://github.com/iamkorun/dhole" class="dark:text-warm-400 text-warm-500 dark:hover:text-warm-200 hover:text-warm-800 transition-colors" aria-label="GitHub">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.694.825.576C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        </a>
+        <a href="https://buymeacoffee.com/iamkorun" class="dark:text-warm-400 text-warm-500 dark:hover:text-warm-200 hover:text-warm-800 transition-colors text-lg" aria-label="Buy Me a Coffee">☕</a>
+        <!-- Theme toggle -->
+        <button id="theme-toggle" onclick="toggleTheme()" class="press-scale p-2 rounded-lg dark:text-warm-400 text-warm-500 dark:hover:text-warm-200 hover:text-warm-800 dark:hover:bg-warm-800 hover:bg-warm-200 transition-colors" aria-label="Toggle theme" aria-pressed="false" style="min-width:44px;min-height:44px;">
+          <!-- Sun (shown in dark mode) -->
+          <svg class="w-5 h-5 dark:block hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <!-- Moon (shown in light mode) -->
+          <svg class="w-5 h-5 dark:hidden block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
         </button>
       </div>
     </div>
+  </nav>
 
-    <div class="mt-6 fade-in" style="transition-delay: 0.15s;">
-      <a href="https://github.com/iamkorun/dhole" class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-300 transition-colors">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.694.825.576C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>
-        View on GitHub
-      </a>
-    </div>
-  </section>
-
-  <!-- Terminal Demo -->
-  <section class="max-w-3xl mx-auto px-6 pb-24">
-    <div class="fade-in terminal">
-      <div class="terminal-bar">
-        <div class="terminal-dot bg-red-500/80"></div>
-        <div class="terminal-dot bg-yellow-500/80"></div>
-        <div class="terminal-dot bg-green-500/80"></div>
-        <span class="ml-3 text-xs text-gray-500 font-mono">~/my-project</span>
+  <!-- Hero: terminal-forward — the terminal IS the hero -->
+  <section class="min-h-[100dvh] flex flex-col justify-center px-6 py-20">
+    <div class="max-w-4xl mx-auto w-full">
+      <!-- Headline above terminal -->
+      <div class="mb-8 fade-in">
+        <h1 class="text-5xl sm:text-6xl lg:text-7xl font-bold dark:text-warm-50 text-warm-900 tracking-tight mb-4">
+          dhole
+        </h1>
+        <p class="text-lg sm:text-xl dark:text-warm-400 text-warm-500 max-w-xl">
+          Sniff out every hidden CLI dependency in your project. One command. Clean pass/fail table. Zero config.
+        </p>
       </div>
-      <div class="p-5 sm:p-6 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto">
-        <p class="text-gray-500 whitespace-pre">$ <span class="text-white">dhole</span></p>
-        <br>
-        <p class="text-white font-bold whitespace-pre">  Tool            Found in                       Installed  Version</p>
-        <p class="text-gray-600 whitespace-pre">  ──────────────  ─────────────────────────────  ─────────  ───────</p>
-        <p class="whitespace-pre">  <span class="text-white">aws</span>             deploy.sh                      <span class="text-pass">yes</span>        2.15.30</p>
-        <p class="whitespace-pre">  <span class="text-white">cargo</span>           .github/workflows/ci.yml       <span class="text-pass">yes</span>        1.78.0</p>
-        <p class="whitespace-pre">  <span class="text-white">curl</span>            Makefile, deploy.sh            <span class="text-pass">yes</span>        8.7.1</p>
-        <p class="whitespace-pre">  <span class="text-white">docker</span>          Makefile, docker-compose.yml   <span class="text-pass">yes</span>        26.1.4</p>
-        <p class="whitespace-pre">  <span class="text-white">docker-compose</span>  docker-compose.yml             <span class="text-pass">yes</span>        2.27.0</p>
-        <p class="whitespace-pre">  <span class="text-white">helm</span>            Makefile                       <span class="text-fail font-bold">NO</span>         <span class="text-gray-600">—</span></p>
-        <p class="whitespace-pre">  <span class="text-white">jq</span>              deploy.sh                      <span class="text-pass">yes</span>        1.7.1</p>
-        <p class="whitespace-pre">  <span class="text-white">kubectl</span>         Makefile                       <span class="text-fail font-bold">NO</span>         <span class="text-gray-600">—</span></p>
-        <p class="whitespace-pre">  <span class="text-white">npm</span>             .github/workflows/ci.yml       <span class="text-pass">yes</span>        10.8.1</p>
-        <br>
-        <p class="whitespace-pre">  <span class="text-fail font-bold">&#10007;</span> 7/9 tools installed, <span class="text-fail font-bold">2</span> missing.</p>
+
+      <!-- Install pill — sits between headline and terminal -->
+      <div class="mb-10 fade-in" style="transition-delay:0.1s">
+        <div class="inline-flex items-center gap-3 dark:bg-warm-900 bg-warm-200 dark:border-warm-700 border-warm-300 border rounded-xl px-5 py-3.5 font-mono text-base sm:text-lg press-scale cursor-pointer group" onclick="copyCommand('cargo install dhole', this)" role="button" tabindex="0" aria-label="Copy install command: cargo install dhole">
+          <span class="dark:text-warm-500 text-warm-400 select-none">$</span>
+          <span class="dark:text-accent-light text-accent font-medium">cargo install dhole</span>
+          <span class="dark:text-warm-500 text-warm-400 group-hover:text-accent transition-colors ml-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          </span>
+        </div>
+        <div class="mt-3 flex items-center gap-4">
+          <a href="#features" class="text-sm font-medium text-accent hover:text-accent-light transition-colors">See what it finds &darr;</a>
+          <a href="https://github.com/iamkorun/dhole" class="text-sm dark:text-warm-500 text-warm-500 dark:hover:text-warm-300 hover:text-warm-700 transition-colors flex items-center gap-1.5">
+            <img src="https://img.shields.io/github/stars/iamkorun/dhole?style=flat&color=D4775B&labelColor=2A2520" alt="GitHub stars" height="20" width="85" loading="lazy">
+          </a>
+        </div>
+      </div>
+
+      <!-- Terminal: THE hero element -->
+      <div class="fade-in terminal-chrome" style="transition-delay:0.2s">
+        <div class="terminal-titlebar">
+          <div class="terminal-dot" style="background:#E86B5A"></div>
+          <div class="terminal-dot" style="background:#D4A04A"></div>
+          <div class="terminal-dot" style="background:#6BBF6B"></div>
+          <span class="ml-3 text-xs dark:text-warm-500 text-warm-400 font-mono">~/my-project</span>
+        </div>
+        <div class="p-5 sm:p-8 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto">
+          <p class="dark:text-warm-500 text-warm-400"><span class="select-none">$ </span><span class="dark:text-warm-100 text-warm-900 font-semibold">dhole</span></p>
+          <br>
+          <p class="dark:text-warm-100 text-warm-800 font-bold">  Tool            Found in                       Installed  Version</p>
+          <p class="dark:text-warm-600 text-warm-300">  ──────────────  ─────────────────────────────  ─────────  ───────</p>
+          <p>  <span class="dark:text-warm-100 text-warm-800">aws</span>             deploy.sh                      <span class="text-pass font-medium">yes</span>        2.15.30</p>
+          <p>  <span class="dark:text-warm-100 text-warm-800">cargo</span>           .github/workflows/ci.yml       <span class="text-pass font-medium">yes</span>        1.78.0</p>
+          <p>  <span class="dark:text-warm-100 text-warm-800">curl</span>            Makefile, deploy.sh            <span class="text-pass font-medium">yes</span>        8.7.1</p>
+          <p>  <span class="dark:text-warm-100 text-warm-800">docker</span>          Makefile, docker-compose.yml   <span class="text-pass font-medium">yes</span>        26.1.4</p>
+          <p>  <span class="dark:text-warm-100 text-warm-800">docker-compose</span>  docker-compose.yml             <span class="text-pass font-medium">yes</span>        2.27.0</p>
+          <p>  <span class="dark:text-warm-100 text-warm-800">helm</span>            Makefile                       <span class="text-fail font-bold">NO</span>         <span class="dark:text-warm-600 text-warm-400">—</span></p>
+          <p>  <span class="dark:text-warm-100 text-warm-800">jq</span>              deploy.sh                      <span class="text-pass font-medium">yes</span>        1.7.1</p>
+          <p>  <span class="dark:text-warm-100 text-warm-800">kubectl</span>         Makefile                       <span class="text-fail font-bold">NO</span>         <span class="dark:text-warm-600 text-warm-400">—</span></p>
+          <p>  <span class="dark:text-warm-100 text-warm-800">npm</span>             .github/workflows/ci.yml       <span class="text-pass font-medium">yes</span>        10.8.1</p>
+          <br>
+          <p>  <span class="text-fail font-bold">&#10007;</span> 7/9 tools installed, <span class="text-fail font-bold">2</span> missing.</p>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- Features -->
-  <section class="max-w-5xl mx-auto px-6 pb-28">
-    <h2 class="text-3xl font-bold text-white text-center mb-14 fade-in">Why dhole?</h2>
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div class="fade-in bg-surface-1 border border-surface-3 rounded-xl p-6">
-        <div class="text-2xl mb-3">🔍</div>
-        <h3 class="text-white font-semibold text-lg mb-2">Deep scanning</h3>
-        <p class="text-gray-400 text-sm">Scans Makefiles, shell scripts, GitHub Actions, GitLab CI, Dockerfiles, Justfiles, Taskfiles, and docker-compose files.</p>
+  <section id="features" class="px-6 py-24 sm:py-32">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl sm:text-4xl font-bold dark:text-warm-50 text-warm-900 mb-4 fade-in">What dhole digs up</h2>
+      <p class="dark:text-warm-400 text-warm-500 mb-14 max-w-lg fade-in">dhole sniffs through your project files and reports every CLI tool it finds — along with whether each one is actually installed.</p>
+
+      <div class="grid sm:grid-cols-2 gap-8">
+        <div class="fade-in">
+          <h3 class="dark:text-warm-100 text-warm-800 font-semibold text-lg mb-2">Deep file scanning</h3>
+          <p class="dark:text-warm-400 text-warm-500 text-sm leading-relaxed">Digs through Makefiles, shell scripts, GitHub Actions, GitLab CI, Dockerfiles, Justfiles, Taskfiles, and docker-compose files. If a CLI tool is referenced, dhole finds it.</p>
+        </div>
+        <div class="fade-in" style="transition-delay:0.1s">
+          <h3 class="dark:text-warm-100 text-warm-800 font-semibold text-lg mb-2">Smart word boundaries</h3>
+          <p class="dark:text-warm-400 text-warm-500 text-sm leading-relaxed"><code class="dark:text-accent-light text-accent text-xs font-mono dark:bg-warm-800 bg-warm-200 px-1.5 py-0.5 rounded">node_modules</code> won't false-positive on <code class="dark:text-accent-light text-accent text-xs font-mono dark:bg-warm-800 bg-warm-200 px-1.5 py-0.5 rounded">node</code>. Matches are precise, not greedy.</p>
+        </div>
+        <div class="fade-in">
+          <h3 class="dark:text-warm-100 text-warm-800 font-semibold text-lg mb-2">Version detection</h3>
+          <p class="dark:text-warm-400 text-warm-500 text-sm leading-relaxed">Tries <code class="dark:text-accent-light text-accent text-xs font-mono dark:bg-warm-800 bg-warm-200 px-1.5 py-0.5 rounded">--version</code>, <code class="dark:text-accent-light text-accent text-xs font-mono dark:bg-warm-800 bg-warm-200 px-1.5 py-0.5 rounded">-v</code>, and <code class="dark:text-accent-light text-accent text-xs font-mono dark:bg-warm-800 bg-warm-200 px-1.5 py-0.5 rounded">version</code> subcommands with timeout protection. Reports what you actually have installed.</p>
+        </div>
+        <div class="fade-in" style="transition-delay:0.1s">
+          <h3 class="dark:text-warm-100 text-warm-800 font-semibold text-lg mb-2">CI-ready quiet mode</h3>
+          <p class="dark:text-warm-400 text-warm-500 text-sm leading-relaxed">Pass <code class="dark:text-accent-light text-accent text-xs font-mono dark:bg-warm-800 bg-warm-200 px-1.5 py-0.5 rounded">--quiet</code> and dhole returns only an exit code. Drop it into any CI pipeline as a preflight check.</p>
+        </div>
+        <div class="fade-in">
+          <h3 class="dark:text-warm-100 text-warm-800 font-semibold text-lg mb-2">Threaded checks</h3>
+          <p class="dark:text-warm-400 text-warm-500 text-sm leading-relaxed">Pure Rust, no regex crate, no config files. Version checks fan out across threads — projects with dozens of deps finish in milliseconds.</p>
+        </div>
+        <div class="fade-in" style="transition-delay:0.1s">
+          <h3 class="dark:text-warm-100 text-warm-800 font-semibold text-lg mb-2">60+ tools recognized</h3>
+          <p class="dark:text-warm-400 text-warm-500 text-sm leading-relaxed">Docker, kubectl, aws, terraform, cargo, npm, python, gh, deno, bun, mvn, gradle, gcc, and many more — out of the box.</p>
+        </div>
       </div>
-      <div class="fade-in bg-surface-1 border border-surface-3 rounded-xl p-6" style="transition-delay: 0.1s;">
-        <div class="text-2xl mb-3">🎯</div>
-        <h3 class="text-white font-semibold text-lg mb-2">Smart matching</h3>
-        <p class="text-gray-400 text-sm">Word-boundary detection means <code class="text-accent text-xs">node_modules</code> won't false-positive on <code class="text-accent text-xs">node</code>.</p>
+    </div>
+  </section>
+
+  <!-- Usage examples -->
+  <section class="px-6 py-24 sm:py-32 dark:bg-warm-900/30 bg-warm-200/50">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl sm:text-4xl font-bold dark:text-warm-50 text-warm-900 mb-4 fade-in">Real examples</h2>
+      <p class="dark:text-warm-400 text-warm-500 mb-14 max-w-lg fade-in">dhole works right out of the box. Point it at any project directory.</p>
+
+      <!-- Example 1: specific path -->
+      <div class="mb-10 fade-in">
+        <p class="text-sm dark:text-warm-400 text-warm-500 mb-3 font-medium">Scan a specific directory:</p>
+        <div class="terminal-chrome">
+          <div class="terminal-titlebar">
+            <div class="terminal-dot" style="background:#E86B5A"></div>
+            <div class="terminal-dot" style="background:#D4A04A"></div>
+            <div class="terminal-dot" style="background:#6BBF6B"></div>
+            <span class="ml-3 text-xs dark:text-warm-500 text-warm-400 font-mono">~</span>
+          </div>
+          <div class="p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto">
+            <p class="dark:text-warm-500 text-warm-400"><span class="select-none">$ </span><span class="dark:text-warm-100 text-warm-900">dhole ./infrastructure/</span></p>
+          </div>
+        </div>
       </div>
-      <div class="fade-in bg-surface-1 border border-surface-3 rounded-xl p-6" style="transition-delay: 0.2s;">
-        <div class="text-2xl mb-3">📋</div>
-        <h3 class="text-white font-semibold text-lg mb-2">Version detection</h3>
-        <p class="text-gray-400 text-sm">Automatically detects installed versions by trying <code class="text-accent text-xs">--version</code>, <code class="text-accent text-xs">-v</code>, and <code class="text-accent text-xs">version</code> with timeout protection.</p>
+
+      <!-- Example 2: quiet mode for CI -->
+      <div class="mb-10 fade-in">
+        <p class="text-sm dark:text-warm-400 text-warm-500 mb-3 font-medium">CI preflight — fail the build if any dependency is missing:</p>
+        <div class="terminal-chrome">
+          <div class="terminal-titlebar">
+            <div class="terminal-dot" style="background:#E86B5A"></div>
+            <div class="terminal-dot" style="background:#D4A04A"></div>
+            <div class="terminal-dot" style="background:#6BBF6B"></div>
+            <span class="ml-3 text-xs dark:text-warm-500 text-warm-400 font-mono">ci.yml</span>
+          </div>
+          <div class="p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto">
+            <p class="dark:text-warm-500 text-warm-400"><span class="select-none">$ </span><span class="dark:text-warm-100 text-warm-900">dhole --quiet && echo "All tools present"</span></p>
+            <p class="dark:text-warm-400 text-warm-500">All tools present</p>
+          </div>
+        </div>
       </div>
-      <div class="fade-in bg-surface-1 border border-surface-3 rounded-xl p-6">
-        <div class="text-2xl mb-3">🤖</div>
-        <h3 class="text-white font-semibold text-lg mb-2">CI-ready</h3>
-        <p class="text-gray-400 text-sm">Quiet mode (<code class="text-accent text-xs">--quiet</code>) returns only an exit code. Drop it into any CI pipeline.</p>
-      </div>
-      <div class="fade-in bg-surface-1 border border-surface-3 rounded-xl p-6" style="transition-delay: 0.1s;">
-        <div class="text-2xl mb-3">⚡</div>
-        <h3 class="text-white font-semibold text-lg mb-2">Instant results</h3>
-        <p class="text-gray-400 text-sm">Pure Rust, no regex crate, no config files. Tool checks fan out across threads so a project with dozens of dependencies still completes in milliseconds.</p>
-      </div>
-      <div class="fade-in bg-surface-1 border border-surface-3 rounded-xl p-6" style="transition-delay: 0.2s;">
-        <div class="text-2xl mb-3">📦</div>
-        <h3 class="text-white font-semibold text-lg mb-2">60+ tools recognized</h3>
-        <p class="text-gray-400 text-sm">Docker, kubectl, aws, terraform, cargo, npm, python, gh, deno, bun, mvn, gradle, gcc, and many more out of the box.</p>
+
+      <!-- Example 3: verbose -->
+      <div class="fade-in">
+        <p class="text-sm dark:text-warm-400 text-warm-500 mb-3 font-medium">Verbose output shows which files reference each tool:</p>
+        <div class="terminal-chrome">
+          <div class="terminal-titlebar">
+            <div class="terminal-dot" style="background:#E86B5A"></div>
+            <div class="terminal-dot" style="background:#D4A04A"></div>
+            <div class="terminal-dot" style="background:#6BBF6B"></div>
+            <span class="ml-3 text-xs dark:text-warm-500 text-warm-400 font-mono">~/my-project</span>
+          </div>
+          <div class="p-5 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto">
+            <p class="dark:text-warm-500 text-warm-400"><span class="select-none">$ </span><span class="dark:text-warm-100 text-warm-900">dhole --verbose</span></p>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- Install -->
-  <section class="max-w-3xl mx-auto px-6 pb-28">
-    <h2 class="text-3xl font-bold text-white text-center mb-10 fade-in">Install</h2>
-    <div class="fade-in">
-      <div class="flex gap-2 mb-4">
-        <button class="tab-btn active text-sm font-medium px-4 py-2 rounded-lg border border-transparent text-gray-400 transition-all" onclick="switchTab(this, 'tab-cargo')">cargo</button>
-        <button class="tab-btn text-sm font-medium px-4 py-2 rounded-lg border border-transparent text-gray-400 transition-all" onclick="switchTab(this, 'tab-source')">source</button>
-        <button class="tab-btn text-sm font-medium px-4 py-2 rounded-lg border border-transparent text-gray-400 transition-all" onclick="switchTab(this, 'tab-binary')">binary</button>
-      </div>
-      <div class="bg-surface-1 border border-surface-3 rounded-xl p-5">
-        <div id="tab-cargo" class="tab-content">
-          <pre class="font-mono text-sm text-accent-bright">cargo install dhole</pre>
+  <section id="install" class="px-6 py-24 sm:py-32">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl sm:text-4xl font-bold dark:text-warm-50 text-warm-900 mb-4 fade-in">Install</h2>
+      <p class="dark:text-warm-400 text-warm-500 mb-10 fade-in">Pick your preferred method. dhole is a single binary with zero runtime dependencies.</p>
+
+      <div class="fade-in">
+        <!-- Tabs -->
+        <div class="flex gap-2 mb-4 flex-wrap">
+          <button class="tab-btn active text-sm font-medium px-4 py-2 rounded-lg dark:border-accent border-accent dark:text-accent-light text-accent dark:bg-accent-muted bg-accent-muted border transition-all press-scale" onclick="switchTab(this, 'tab-cargo')" style="min-height:44px">cargo</button>
+          <button class="tab-btn text-sm font-medium px-4 py-2 rounded-lg border dark:border-warm-700 border-warm-300 dark:text-warm-400 text-warm-500 transition-all press-scale" onclick="switchTab(this, 'tab-source')" style="min-height:44px">source</button>
+          <button class="tab-btn text-sm font-medium px-4 py-2 rounded-lg border dark:border-warm-700 border-warm-300 dark:text-warm-400 text-warm-500 transition-all press-scale" onclick="switchTab(this, 'tab-binary')" style="min-height:44px">binary</button>
         </div>
-        <div id="tab-source" class="tab-content hidden">
-          <pre class="font-mono text-sm text-accent-bright leading-relaxed">git clone https://github.com/iamkorun/dhole.git
+
+        <!-- Tab content -->
+        <div class="dark:bg-warm-900 bg-warm-50 dark:border-warm-700 border-warm-300 border rounded-xl p-5">
+          <div id="tab-cargo" class="tab-content">
+            <div class="flex items-center justify-between gap-4">
+              <pre class="font-mono text-sm dark:text-accent-light text-accent">cargo install dhole</pre>
+              <button onclick="copyCommand('cargo install dhole', this)" class="press-scale p-2 rounded-lg dark:text-warm-500 text-warm-400 dark:hover:text-accent hover:text-accent dark:hover:bg-warm-800 hover:bg-warm-200 transition-colors" aria-label="Copy command" style="min-width:44px;min-height:44px">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </button>
+            </div>
+          </div>
+          <div id="tab-source" class="tab-content hidden">
+            <div class="flex items-start justify-between gap-4">
+              <pre class="font-mono text-sm dark:text-accent-light text-accent leading-relaxed">git clone https://github.com/iamkorun/dhole.git
 cd dhole
 cargo install --path .</pre>
-        </div>
-        <div id="tab-binary" class="tab-content hidden">
-          <p class="text-sm text-gray-400">Download the latest binary from <a href="https://github.com/iamkorun/dhole/releases" class="text-accent hover:text-accent-bright underline">GitHub Releases</a>.</p>
+              <button onclick="copyCommand('git clone https://github.com/iamkorun/dhole.git && cd dhole && cargo install --path .', this)" class="press-scale p-2 rounded-lg dark:text-warm-500 text-warm-400 dark:hover:text-accent hover:text-accent dark:hover:bg-warm-800 hover:bg-warm-200 transition-colors flex-shrink-0" aria-label="Copy command" style="min-width:44px;min-height:44px">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </button>
+            </div>
+          </div>
+          <div id="tab-binary" class="tab-content hidden">
+            <p class="text-sm dark:text-warm-400 text-warm-500">Download the latest binary from <a href="https://github.com/iamkorun/dhole/releases" class="text-accent hover:text-accent-light underline underline-offset-2 transition-colors">GitHub Releases</a>.</p>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Footer -->
-  <footer class="border-t border-surface-3 py-12 px-6">
-    <div class="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
-      <p>MIT License</p>
+  <footer class="dark:border-warm-800 border-warm-200 border-t px-6 py-12">
+    <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm dark:text-warm-500 text-warm-400">
+      <p>🐕 dhole &middot; MIT License</p>
       <div class="flex items-center gap-6">
-        <a href="https://github.com/iamkorun/dhole" class="hover:text-gray-300 transition-colors flex items-center gap-2">
+        <a href="https://github.com/iamkorun/dhole" class="dark:hover:text-warm-200 hover:text-warm-700 transition-colors flex items-center gap-2">
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.694.825.576C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>
           Star on GitHub
         </a>
-        <a href="https://buymeacoffee.com/iamkorun" class="hover:text-gray-300 transition-colors">
+        <a href="https://buymeacoffee.com/iamkorun" class="dark:hover:text-warm-200 hover:text-warm-700 transition-colors">
           ☕ Buy Me a Coffee
         </a>
       </div>
@@ -249,30 +399,51 @@ cargo install --path .</pre>
   </footer>
 
   <script>
-    // Scroll animations
+    // Scroll fade-in
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-        }
+        if (entry.isIntersecting) entry.target.classList.add('visible');
       });
     }, { threshold: 0.1 });
-
     document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
-    // Copy install command
-    function copyInstall(btn) {
-      navigator.clipboard.writeText('cargo install dhole');
-      btn.classList.add('copied');
-      setTimeout(() => btn.classList.remove('copied'), 2000);
+    // Copy command with toast
+    function copyCommand(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const toast = document.getElementById('toast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 1800);
+      });
     }
 
-    // Tabs
+    // Tab switching
     function switchTab(btn, tabId) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active', 'dark:border-accent', 'border-accent', 'dark:text-accent-light', 'text-accent', 'dark:bg-accent-muted', 'bg-accent-muted');
+        b.classList.add('dark:border-warm-700', 'border-warm-300', 'dark:text-warm-400', 'text-warm-500');
+      });
       document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-      btn.classList.add('active');
+      btn.classList.add('active', 'dark:border-accent', 'border-accent', 'dark:text-accent-light', 'text-accent', 'dark:bg-accent-muted', 'bg-accent-muted');
+      btn.classList.remove('dark:border-warm-700', 'border-warm-300', 'dark:text-warm-400', 'text-warm-500');
       document.getElementById(tabId).classList.remove('hidden');
+    }
+
+    // Theme toggle
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.classList.contains('dark');
+      const btn = document.getElementById('theme-toggle');
+      if (isDark) {
+        html.classList.remove('dark');
+        html.classList.add('light');
+        localStorage.setItem('forge-theme', 'light');
+        btn.setAttribute('aria-pressed', 'true');
+      } else {
+        html.classList.remove('light');
+        html.classList.add('dark');
+        localStorage.setItem('forge-theme', 'dark');
+        btn.setAttribute('aria-pressed', 'false');
+      }
     }
   </script>
 </body>
